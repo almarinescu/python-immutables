@@ -1,3 +1,4 @@
 dist/*
-Immutable_Collections*
+python_immutables*
 *.pyc
+*.swp

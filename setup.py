@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-	name="Immutable Collections",
+	name="python-immutables",
 	author="Alexandru Marinescu",
 	author_email="almarinescu@gmail.com",
 	version="0.0.1",

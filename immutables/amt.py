@@ -10,9 +10,9 @@ __author__ = "Alexandru Marinescu"
 __contact__ = "almarinescu@gmail.com"
 
 class AmtNode(object):
-		def __init__(self, key, value):
-			self.key = key
-			self.value = value
+	def __init__(self, key, value):
+		self.key = key
+		self.value = value
 
 class Amt(object):
 	"""
