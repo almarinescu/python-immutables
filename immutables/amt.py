@@ -39,3 +39,17 @@ class ImmutableDict(Amt):
 
 class ImmutableSet(Amt):
 	pass
+
+m1 = 0x55555555
+m2 = 0x33333333
+m4 = 0x0f0f0f0f
+
+def hammingWeight(x):
+	x -= (x >> 1) & m1
+	x = (x & m2) + ((x >> 2) & m2)
+	x = (x + (x >> 4)) & m4
+	x += x >>  8
+	x += x >> 16
+	x += x >> 32
+
+	return x & 0x7f
