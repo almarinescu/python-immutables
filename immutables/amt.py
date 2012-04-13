@@ -45,6 +45,8 @@ m2 = 0x33333333
 m4 = 0x0f0f0f0f
 
 def hammingWeight(x):
+	"""Compute the Hamming weight (the number of non-zero bits)."""
+
 	x -= (x >> 1) & m1
 	x = (x & m2) + ((x >> 2) & m2)
 	x = (x + (x >> 4)) & m4
