@@ -47,7 +47,7 @@ class Amt(object):
 				bitmapIndex = hammingWeight(lastNBits(node.bitmap, tableIndex))
 
 				# If the node has at the given index a tuple:
-				if isinstance(node.values[bitmapIndex], tuple):
+				if isinstance(tuple, node.values[bitmapIndex]):
 					# Check if the key matches.
 					if node.values[bitmapIndex][0] == key:
 						return node.values[bitmapIndex][1]
