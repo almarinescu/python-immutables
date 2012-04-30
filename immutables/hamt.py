@@ -38,13 +38,19 @@ class Amt(object):
 		numLevels = 32 // 5
 
 		while level <= numLevels:
+			# Get the bits corresponding to the current level in the hashed key.
 			tableIndex = getBitsAtLevel(hashedKey, level)
 
 			# Check if the table contains the given index.
 			if not isBitSet(node.bitmap, tableIndex):
 				return None
 			else:
-				bitmapIndex = hammingWeight(lastNBits(node.bitmap, tableIndex))
+				# We compute the index in the node's value list by counting the number
+				# of 1s in the bit map below the 'table index' position.
+				bitmapIndex = 0
+				if tableIndex != 0:
+					hammingMask = lastNBits(node.bitmap, tableIndex - 1)
+					bitmapIndex = hammingWeight(hammingMask)
 
 				# If the node has at the given index a tuple:
 				if isinstance(tuple, node.values[bitmapIndex]):
