@@ -2,7 +2,7 @@
 
 """
 
-Array Mapped Trie
+Hashed Array Mapped Trie
 
 Implementation based on the paper "Ideal Hash Trees" by Phil Bagwell.
 
@@ -11,57 +11,58 @@ Implementation based on the paper "Ideal Hash Trees" by Phil Bagwell.
 __author__ = "Alexandru Marinescu"
 __contact__ = "almarinescu@gmail.com"
 
-class BitmapHash(object):
-	def __init__(self):
-		self.bitmap = 0
-		self.values = []
-
-	def search(self, key):
-		if isBitSet(self.bitmap, key):
-			return self.values[hammingWeight()]
-
-	def insert(self, key, value):
-		pass
-
-	def delete(self, key, value):
-		pass
-
 class Amt(object):
 	""" Array Mapped Trie """
-
 	def __init__(self):
-		self.root = None
+		self.root = (0, [])
+
+	@property
+	def bitmap(self):
+		return self.root[0]
+
+	@property
+	def values(self):
+		return self.root[1]
 
 	def insert(self, key, value):
 		pass
-	
-	def search(self, key):
-		return self._find_key(self.root, hash(key), key, 0)
 
-	def _find_key(self, root, key_hash, key, level):
-		if root is None:
-			return None
-		
-		if isinstance(root, tuple):
-			if root[0] == key:
-				return root[1]
-			else:
+	def contains(self, key):
+		"""Check if the hash table contains the given key."""
+		return self.search(key) is not None
+
+	def search(self, key):
+		hashedKey = hash(key)
+		node = self
+		level = 0
+		numLevels = 32 // 5
+
+		while level <= numLevels:
+			tableIndex = getBitsAtLevel(hashedKey, level)
+
+			# Check if the table contains the given index.
+			if not isBitSet(node.bitmap, tableIndex):
 				return None
-		else:
-			bits = getBitsAtLevel(level)
-			return self._find_key(root[bits], key_hash, key, level+1)
+			else:
+				bitmapIndex = hammingWeight(lastNBits(node.bitmap, tableIndex))
+
+				# If the node has at the given index a tuple:
+				if isinstance(node.values[bitmapIndex], tuple):
+					# Check if the key matches.
+					if node.values[bitmapIndex][0] == key:
+						return node.values[bitmapIndex][1]
+					else:
+						return None
+				# We must go into the next level.
+				else:
+					node = node.values[bitmapIndex]
+					level += 1
+
+		# We failed to find the given key.
+		return None
 
 	def delete(self, key):
 		pass
-
-class ImmutableList(Amt):
-	pass
-
-class ImmutableDict(Amt):
-	pass
-
-class ImmutableSet(Amt):
-	pass
 
 m1 = 0x55555555
 m2 = 0x33333333
@@ -91,6 +92,9 @@ def setBitAt(value, index):
 
 def unsetBitAt(value, index):
 	return ~(1 << index) & value
+
+def lastNBits(value, nbits):
+	return value & int('1' * nbits, 2)
 
 def bitsBelow(value, index):
 	shift = 1 << index
