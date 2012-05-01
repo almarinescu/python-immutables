@@ -11,27 +11,82 @@ Implementation based on the paper "Ideal Hash Trees" by Phil Bagwell.
 __author__ = "Alexandru Marinescu"
 __contact__ = "almarinescu@gmail.com"
 
-class Amt(object):
+class BitmapHashTable(object):
+	def __init__(self, bitmap=0, values=[]):
+		self.bitmap = bitmap
+		self.values = values
+
+	def _idx(self, key):
+		"""
+		Compute the index in the value list for a given key.
+		
+		The index is computed by counting the number of 1s in the bitmap below the
+		bit given by the `key` argument.
+		"""
+		if key > 0:
+			return hammingWeight(lastNBits(self.bitmap, key))
+
+		return 0
+
+	def insert(self, key, value):
+		if self.hasKey(key):
+			self.values[self._idx(key)] = value
+		else:
+			self.bitmap = setBitAt(self.bitmap, key)
+			self.values = self._insertValue(key, value)
+
+	def _insertValue(self, key, value):
+		return self.values[0:self._idx(key)] + [value] + self.values[self._idx(key):]
+
+	def delete(self, key):
+		self.values = self._removeValue(key)
+		self.bitmap = unsetBitAt(self.bitmap, key)
+
+	def _removeValue(self, key):
+		if self.hasKey(key):
+			remIdx = self._idx(key)
+			if remIdx == 0:
+				if len(self.values) > 1:
+					return self.values[1:]
+				else:
+					return []
+			else:
+				newValues = self.values[0:remIdx]
+				if remIdx+1 != len(self.values):
+					newValues += self.values[remIdx+1:]
+
+				return newValues
+		else:
+			return self.values
+
+	def hasKey(self, key):
+		return isBitSet(self.bitmap, key)
+
+	def get(self, key):
+		if not self.hasKey(key):
+			return None
+		else:
+			return self.values[self._idx(key)]
+	
+	def __len__(self):
+		return hammingWeight(self.bitmap)
+
+class ImmutableBitmapHashTable(BitmapHashTable):
+	pass
+
+class Hamt(object):
 	""" Array Mapped Trie """
 	def __init__(self):
-		self.root = (0, [])
-
-	@property
-	def bitmap(self):
-		return self.root[0]
-
-	@property
-	def values(self):
-		return self.root[1]
+		self.table = BitmapHashTable()
 
 	def insert(self, key, value):
 		pass
 
 	def contains(self, key):
 		"""Check if the hash table contains the given key."""
-		return self.search(key) is not None
+		return self.get(key) is not None
 
-	def search(self, key):
+	def get(self, key):
 		hashedKey = hash(key)
 		node = self
 		level = 0
@@ -39,30 +94,20 @@ class Amt(object):
 
 		while level <= numLevels:
 			# Get the bits corresponding to the current level in the hashed key.
-			tableIndex = getBitsAtLevel(hashedKey, level)
+			tableKey = getBitsAtLevel(hashedKey, level)
 
 			# Check if the table contains the given index.
-			if not isBitSet(node.bitmap, tableIndex):
+			if not node.table.hasKey(tableKey):
 				return None
 			else:
-				# We compute the index in the node's value list by counting the number
-				# of 1s in the bit map below the 'table index' position.
-				bitmapIndex = 0
-				if tableIndex != 0:
-					hammingMask = lastNBits(node.bitmap, tableIndex - 1)
-					bitmapIndex = hammingWeight(hammingMask)
+				node = self.table.get(tableKey)
+				level += 1
 
-				# If the node has at the given index a tuple:
-				if isinstance(tuple, node.values[bitmapIndex]):
-					# Check if the key matches.
-					if node.values[bitmapIndex][0] == key:
-						return node.values[bitmapIndex][1]
+				if isinstance(tuple, entry):
+					if node[0] == key:
+						return node[1]
 					else:
 						return None
-				# We must go into the next level.
-				else:
-					node = node.values[bitmapIndex]
-					level += 1
 
 		# We failed to find the given key.
 		return None
@@ -100,6 +145,8 @@ def unsetBitAt(value, index):
 	return ~(1 << index) & value
 
 def lastNBits(value, nbits):
+	if nbits == 0:
+		return 0
 	return value & int('1' * nbits, 2)
 
 def bitsBelow(value, index):
